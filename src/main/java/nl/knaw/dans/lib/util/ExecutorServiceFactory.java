@@ -33,21 +33,25 @@ import java.util.concurrent.LinkedBlockingDeque;
  *
  * ```java
  *
- *  private ExecutorServiceFactory jobQueue;
+ *  public class MyAppConfiguration extends Configuration {
  *
- *  public void setJobQueue(ExecutorServiceFactory jobQueue)
- *     this.jobQueue = jobQueue;
+ *     private ExecutorServiceFactory jobQueue;
+ *
+ *     public void setJobQueue(ExecutorServiceFactory jobQueue)
+ *         this.jobQueue = jobQueue;
+ *     }
+ *
+ *     public ExecutorServiceFactory getJobQueue()
+ *         return jobQueue;
+ *     }
+ *
+ *  // ...
  *  }
- *
-   public ExecutorServiceFactory getJobQueue()
- *     return jobQueue;
- *  }
- *
  * ```
  *
  * In the configuration file you can now configure the jobQueue as follows:
  *
- * ```yaml
+ * ```YAML
  * jobQueue:
  *   nameFormat: "job-queue-thread-%d"
  *
@@ -62,9 +66,12 @@ import java.util.concurrent.LinkedBlockingDeque;
  *
  *  In your Application class' `run` method you can finally create the actual executor:
  *
- *  ```java
+ * ```java
+ *
+ *  // inside run()
  *  ExecutorService executor = configuration.getJobQueue().build(environment);
- *  ```
+ *
+ * ```
  *
  *  and pass it to the resources or other components that need to use it.
  *
