@@ -38,6 +38,12 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>nl.knaw.dans</groupId>
+            <artifactId>dans-dataverse-client-lib</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
