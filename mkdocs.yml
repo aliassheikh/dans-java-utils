@@ -24,7 +24,7 @@ repo_url: https://github.com/DANS-KNAW/dans-java-utils
 
 nav:
   - Manual: index.md
-  - API: api.md
+  - JavaDocs: api.md
 
 plugins:
   - markdownextradata
