@@ -23,16 +23,29 @@ import net.sourceforge.argparse4j.inf.Subparser;
  * A DropWizard {@link ConfiguredCommand} that configures the value of system property `dans.default.config`
  * as the default for the `file` parameter. This can be used to create a start-up script for the application that
  * does not require the user to explicitly provide the `config.yml` location with every invocation, .e.g.,
- *
+ * <p>
  * ```bash
  * ARGS=$@
- *
+ * <p>
  * java -Ddans.config.default=/etc/opt/dans.knaw.nl/my-app/config.yml my-app.jar $ARGS
  * ```
  *
  * @param <T> the application's configuration class
  */
 public abstract class DefaultConfigConfiguredCommand<T extends Configuration> extends ConfiguredCommand<T> implements DefaultConfigCommand {
+    private final boolean configFileAsOption;
+
+    /**
+     * Creates a new command.
+     *
+     * @param name               the name of the command, used for command line invocation
+     * @param description        a description of the command's purpose
+     * @param configFileAsOption if <code>true</code>, the configuration file is set via an option <code>--config</code>, otherwise, as a positional argument
+     */
+    protected DefaultConfigConfiguredCommand(String name, String description, boolean configFileAsOption) {
+        super(name, description);
+        this.configFileAsOption = configFileAsOption;
+    }
 
     /**
      * Creates a new command.
@@ -41,15 +54,23 @@ public abstract class DefaultConfigConfiguredCommand<T extends Configuration> ex
      * @param description a description of the command's purpose
      */
     protected DefaultConfigConfiguredCommand(String name, String description) {
-        super(name, description);
+        this(name, description, false);
     }
+
 
     @Override
     public void configure(Subparser subparser) {
         String defaultConfig = System.getProperty(DANS_DEFAULT_CONFIG_PROPERTY);
-        subparser.addArgument("file")
-                .nargs("?")
-                .setDefault(defaultConfig)
-                .help("application configuration file");
+        if (configFileAsOption)
+            subparser.addArgument("-c", "--config")
+                    .nargs("?")
+                    .dest("file")
+                    .setDefault(defaultConfig)
+                    .help("application configuration file");
+        else
+            subparser.addArgument("file")
+                    .nargs("?")
+                    .setDefault(defaultConfig)
+                    .help("application configuration file");
     }
 }

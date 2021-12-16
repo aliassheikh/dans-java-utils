@@ -24,16 +24,30 @@ import net.sourceforge.argparse4j.inf.Subparser;
  * A DropWizard {@link EnvironmentCommand} that configures the value of system property `dans.default.config`
  * as the default for the `file` parameter. This can be used to create a start-up script for the application that
  * does not require the user to explicitly provide the `config.yml` location with every invocation, .e.g.,
- *
+ * <p>
  * ```bash
  * ARGS=$@
- *
+ * <p>
  * java -Ddans.config.default=/etc/opt/dans.knaw.nl/my-app/config.yml my-app.jar $ARGS
  * ```
  *
  * @param <T> the application's configuration class
  */
 public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> extends EnvironmentCommand<T> implements DefaultConfigCommand {
+    private final boolean configFileAsOption;
+
+    /**
+     * Creates a new environment command.
+     *
+     * @param application        the application providing this command
+     * @param name               the name of the command, used for command line invocation
+     * @param description        a description of the command's purpose
+     * @param configFileAsOption if <code>true</code>, the configuration file is set via an option <code>--config</code>, otherwise, as a positional argument
+     */
+    protected DefaultConfigEnvironmentCommand(Application<T> application, String name, String description, boolean configFileAsOption) {
+        super(application, name, description);
+        this.configFileAsOption = configFileAsOption;
+    }
 
     /**
      * Creates a new environment command.
@@ -43,15 +57,22 @@ public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> e
      * @param description a description of the command's purpose
      */
     protected DefaultConfigEnvironmentCommand(Application<T> application, String name, String description) {
-        super(application, name, description);
+        this(application, name, description, false);
     }
 
     @Override
     public void configure(Subparser subparser) {
         String defaultConfig = System.getProperty(DANS_DEFAULT_CONFIG_PROPERTY);
-        subparser.addArgument("file")
-                .nargs("?")
-                .setDefault(defaultConfig)
-                .help("application configuration file");
+        if (configFileAsOption)
+            subparser.addArgument("-c", "--config")
+                    .nargs("?")
+                    .dest("file")
+                    .setDefault(defaultConfig)
+                    .help("application configuration file");
+        else
+            subparser.addArgument("file")
+                    .nargs("?")
+                    .setDefault(defaultConfig)
+                    .help("application configuration file");
     }
 }
