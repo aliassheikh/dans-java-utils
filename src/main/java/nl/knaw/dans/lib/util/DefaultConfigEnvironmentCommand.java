@@ -18,6 +18,7 @@ package nl.knaw.dans.lib.util;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.cli.EnvironmentCommand;
+import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Subparser;
 
 /**
@@ -33,7 +34,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
  *
  * @param <T> the application's configuration class
  */
-public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> extends EnvironmentCommand<T> implements DefaultConfigCommand {
+public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> extends EnvironmentCommand<T> {
     private final boolean configFileAsOption;
 
     /**
@@ -61,18 +62,7 @@ public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> e
     }
 
     @Override
-    public void configure(Subparser subparser) {
-        String defaultConfig = System.getProperty(DANS_DEFAULT_CONFIG_PROPERTY);
-        if (configFileAsOption)
-            subparser.addArgument("-c", "--config")
-                    .nargs("?")
-                    .dest("file")
-                    .setDefault(defaultConfig)
-                    .help("application configuration file");
-        else
-            subparser.addArgument("file")
-                    .nargs("?")
-                    .setDefault(defaultConfig)
-                    .help("application configuration file");
+    protected Argument addFileArgument(Subparser subparser) {
+        return ConfiguredCommandUtils.addFileArgument(subparser, configFileAsOption);
     }
 }
