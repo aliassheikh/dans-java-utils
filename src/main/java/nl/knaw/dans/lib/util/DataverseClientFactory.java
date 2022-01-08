@@ -27,9 +27,11 @@ public class DataverseClientFactory {
 
     private URI baseUrl;
     private String apiKey;
+    private int awaitLockStateMaxNumberOfRetries;
+    private int awaitLockStateMillisecondsBetweenRetries;
 
     public DataverseClient build() {
-        DataverseClientConfig config = new DataverseClientConfig(baseUrl, apiKey);
+        DataverseClientConfig config = new DataverseClientConfig(baseUrl, apiKey, awaitLockStateMaxNumberOfRetries, awaitLockStateMillisecondsBetweenRetries);
         return new DataverseClient(config);
     }
 
@@ -47,5 +49,21 @@ public class DataverseClientFactory {
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public int getAwaitLockStateMaxNumberOfRetries() {
+        return awaitLockStateMaxNumberOfRetries;
+    }
+
+    public void setAwaitLockStateMaxNumberOfRetries(int awaitLockStateMaxNumberOfRetries) {
+        this.awaitLockStateMaxNumberOfRetries = awaitLockStateMaxNumberOfRetries;
+    }
+
+    public int getAwaitLockStateMillisecondsBetweenRetries() {
+        return awaitLockStateMillisecondsBetweenRetries;
+    }
+
+    public void setAwaitLockStateMillisecondsBetweenRetries(int awaitLockStateMillisecondsBetweenRetries) {
+        this.awaitLockStateMillisecondsBetweenRetries = awaitLockStateMillisecondsBetweenRetries;
     }
 }
