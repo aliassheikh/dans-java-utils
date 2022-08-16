@@ -16,8 +16,7 @@
 
 site_name: dans-java-utils
 theme:
-  name: dans
-  disclaimer: false
+  name: readthedocs
 
 repo_name: DANS-KNAW/dans-java-utils
 repo_url: https://github.com/DANS-KNAW/dans-java-utils
@@ -25,6 +24,7 @@ repo_url: https://github.com/DANS-KNAW/dans-java-utils
 nav:
   - Manual: index.md
   - JavaDocs: api.md
+  - Examples: examples.md
 
 plugins:
   - markdownextradata
