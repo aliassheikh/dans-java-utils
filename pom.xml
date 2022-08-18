@@ -21,7 +21,7 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-java11-project</artifactId>
-        <version>9.0.0</version>
+        <version>9.1.0</version>
         <relativePath />
     </parent>
     <groupId>nl.knaw.dans</groupId>
@@ -30,7 +30,7 @@
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>
-        <developerConnection>scm:git:https://github.com/DANS-KNAW/dans-java-utils</developerConnection>
+        <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
         <tag>HEAD</tag>
     </scm>
     <dependencies>
