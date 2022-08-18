@@ -20,8 +20,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
-        <artifactId>dans-dropwizard-project</artifactId>
-        <version>8.0.0</version>
+        <artifactId>dans-java11-project</artifactId>
+        <version>9.0.0</version>
         <relativePath />
     </parent>
     <groupId>nl.knaw.dans</groupId>
@@ -34,10 +34,6 @@
         <tag>HEAD</tag>
     </scm>
     <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
