@@ -26,12 +26,12 @@
     </parent>
     <groupId>nl.knaw.dans</groupId>
     <artifactId>dans-java-utils</artifactId>
-    <version>0.0.10-SNAPSHOT</version>
+    <version>0.0.10</version>
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/dans-java-utils</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v0.0.10</tag>
     </scm>
     <dependencies>
         <dependency>
