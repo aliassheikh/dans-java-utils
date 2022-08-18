@@ -21,7 +21,7 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-java11-project</artifactId>
-        <version>9.1.0</version>
+        <version>9.2.0</version>
         <relativePath />
     </parent>
     <groupId>nl.knaw.dans</groupId>
