@@ -26,7 +26,7 @@
     </parent>
     <groupId>nl.knaw.dans</groupId>
     <artifactId>dans-java-utils</artifactId>
-    <version>0.0.11-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>
@@ -45,6 +45,21 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <!-- dans-java-utils is used by easy-mirror-deposit, which requires Java 8 to run -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <repositories>
         <repository>
             <id>DANS</id>
