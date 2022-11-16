@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.validatedansbag.health;
+package nl.knaw.dans.lib.util;
 
 import com.codahale.metrics.health.HealthCheck;
+import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseException;
-import nl.knaw.dans.validatedansbag.core.service.DataverseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,16 +26,16 @@ import java.io.IOException;
 public class DataverseHealthCheck extends HealthCheck {
     private static final Logger log = LoggerFactory.getLogger(DataverseHealthCheck.class);
 
-    private final DataverseService dataverseService;
+    private final DataverseClient dataverseClient;
 
-    public DataverseHealthCheck(DataverseService dataverseService) {
-        this.dataverseService = dataverseService;
+    public DataverseHealthCheck(DataverseClient dataverseService) {
+        this.dataverseClient = dataverseService;
     }
 
     @Override
     protected Result check() {
         try {
-            dataverseService.checkConnection();
+            dataverseClient.checkConnection();
             return Result.healthy();
         }
         catch (IOException | DataverseException e) {
