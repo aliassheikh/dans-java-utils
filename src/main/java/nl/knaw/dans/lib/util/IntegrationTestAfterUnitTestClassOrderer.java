@@ -25,7 +25,7 @@ import java.util.Comparator;
  * The integration tests mess up the logging facilities for the unit tests, so we run the integration tests after the unit test
  * This requires every integration test to end with "IntegrationTest"
  */
-public class TestClassOrderer implements ClassOrderer {
+public class IntegrationTestAfterUnitTestClassOrderer implements ClassOrderer {
     @Override
     public void orderClasses(ClassOrdererContext classOrdererContext) {
         classOrdererContext.getClassDescriptors().sort((Comparator<ClassDescriptor>) (left, right) -> {
