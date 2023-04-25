@@ -8,3 +8,4 @@ dans-java-utils
 Java library with utility classes
 
 For more documentation, see [the project website](https://dans-knaw.github.io/dans-java-utils/)
+
