@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.lib.util;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,6 @@ import java.util.concurrent.LinkedBlockingDeque;
  * Factory for configuring and creating an ExecutorService in a DropWizard application.
  *
  * Click <a href="../../../../../../examples/#executorservicefactory" target="_blank">here</a> for code examples.
- *
  */
 public class ExecutorServiceFactory {
 
