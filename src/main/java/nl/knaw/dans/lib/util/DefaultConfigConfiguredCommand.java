@@ -15,8 +15,8 @@
  */
 package nl.knaw.dans.lib.util;
 
-import io.dropwizard.Configuration;
-import io.dropwizard.cli.ConfiguredCommand;
+import io.dropwizard.core.Configuration;
+import io.dropwizard.core.cli.ConfiguredCommand;
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Subparser;
 
@@ -33,7 +33,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
  *
  * @param <T> the application's configuration class
  */
-public abstract class DefaultConfigConfiguredCommand<T extends Configuration> extends ConfiguredCommand<T>  {
+public abstract class DefaultConfigConfiguredCommand<T extends Configuration> extends ConfiguredCommand<T> {
     private final boolean configFileAsOption;
 
     /**

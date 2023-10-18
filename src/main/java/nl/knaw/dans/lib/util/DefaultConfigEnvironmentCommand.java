@@ -15,9 +15,9 @@
  */
 package nl.knaw.dans.lib.util;
 
-import io.dropwizard.Application;
-import io.dropwizard.Configuration;
-import io.dropwizard.cli.EnvironmentCommand;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.Configuration;
+import io.dropwizard.core.cli.EnvironmentCommand;
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Subparser;
 
