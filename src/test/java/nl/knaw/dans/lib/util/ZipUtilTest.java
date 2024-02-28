@@ -29,7 +29,7 @@ public class ZipUtilTest extends AbstractTestWithTestDir {
 
     @Test
     public void zipDirectory_should_zip_directory_without_root_dir_if_oneRootDir_is_false() throws Exception {
-        ZipUtil.zipDirectory(Paths.get("src/test/resources/zip-input/audiences"), testDir.resolve("test.zip").toString(), false);
+        ZipUtil.zipDirectory(Paths.get("src/test/resources/zip-input/audiences"), testDir.resolve("test.zip"), false);
 
         assertThat(testDir.resolve("test.zip")).exists();
         // Check that the entries in the zip file are as expected
@@ -65,7 +65,7 @@ public class ZipUtilTest extends AbstractTestWithTestDir {
 
     @Test
     public void zipDirectory_should_zip_directory_with_root_dir_if_oneRootDir_is_true() throws Exception {
-        ZipUtil.zipDirectory(Paths.get("src/test/resources/zip-input/audiences"), testDir.resolve("test.zip").toString(), true);
+        ZipUtil.zipDirectory(Paths.get("src/test/resources/zip-input/audiences"), testDir.resolve("test.zip"), true);
 
         assertThat(testDir.resolve("test.zip")).exists();
         // Check that the entries in the zip file are as expected

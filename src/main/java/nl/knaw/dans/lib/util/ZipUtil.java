@@ -31,9 +31,8 @@ import java.util.stream.Stream;
 
 public class ZipUtil {
 
-    public static void zipDirectory(Path sourceDirectory, String targetZipFile, boolean oneRootDir) throws IOException {
-        Path zipFilePath = Paths.get(targetZipFile);
-        try (OutputStream outputStream = Files.newOutputStream(zipFilePath)) {
+    public static void zipDirectory(Path sourceDirectory, Path targetZipFile, boolean oneRootDir) throws IOException {
+        try (OutputStream outputStream = Files.newOutputStream(targetZipFile)) {
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
             try (ZipArchiveOutputStream zipArchiveOutputStream = new ZipArchiveOutputStream(bufferedOutputStream)) {
                 String base;
