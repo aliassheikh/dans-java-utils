@@ -37,7 +37,23 @@ public class UrnUuid {
         UUID.fromString(s.substring("urn:uuid:".length())); // throws IllegalArgumentException if not a valid UUID
         return new UrnUuid(URI.create(s));
     }
-
+    
+    public static UrnUuid fromUri(URI uri) {
+        if (!uri.getScheme().equals("urn") || !uri.getSchemeSpecificPart().startsWith("uuid:")) {
+            throw new IllegalArgumentException("Not a URN UUID: " + uri);
+        }
+        
+        // Check that the remainder is a valid UUID
+        try {
+            UUID.fromString(uri.getSchemeSpecificPart().substring("uuid:".length()));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Not a URN UUID: " + uri);
+        }
+        
+        return new UrnUuid(uri);
+    }
+    
+    
     @Override
     public String toString() {
         return urn.toString();
