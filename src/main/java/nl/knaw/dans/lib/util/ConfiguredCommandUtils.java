@@ -18,6 +18,7 @@ package nl.knaw.dans.lib.util;
 import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Subparser;
 
+@Deprecated
 public class ConfiguredCommandUtils {
     private static final String DANS_DEFAULT_CONFIG_PROPERTY = "dans.default.config";
 

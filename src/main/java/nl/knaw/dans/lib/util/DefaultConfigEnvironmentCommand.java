@@ -31,6 +31,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
  *
  * @param <T> the application's configuration class
  */
+@Deprecated
 public abstract class DefaultConfigEnvironmentCommand<T extends Configuration> extends EnvironmentCommand<T> {
     private final boolean configFileAsOption;
 
