@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  * will not be found. In that case the version would not be found anyway, as there is no jar file to read the manifest from. 
  */
 @Slf4j
-public class VersionProvider {
+public class PicocliVersionProvider {
     public String getVersion() {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
         if (trace.length > 0) {
