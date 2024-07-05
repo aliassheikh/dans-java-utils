@@ -15,21 +15,35 @@
  */
 package nl.knaw.dans.lib.util;
 
-import org.apache.commons.io.IOUtils;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
 
+@Slf4j
 public class VersionProvider {
-    public String getVersion() throws IOException {
-        try (InputStream inputStream = getClass().getResourceAsStream("/version.txt")) {
-            if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+    public String getVersion() {
+        Optional<StackTraceElement> mainOpt = Arrays.stream(
+            Thread.currentThread().getStackTrace()
+        ).filter(stackTraceElement ->
+            stackTraceElement.getMethodName().equals("main")
+        ).findFirst();
+        return mainOpt.map(VersionProvider::getImplementationVersion).orElse(null);
+    }
+
+    private static String getImplementationVersion(StackTraceElement stackTraceElement) {
+        try {
+            Class<?> aClass = Class.forName(stackTraceElement.getClassName());
+            String implementationVersion = aClass.getPackage().getImplementationVersion();
+            if (implementationVersion == null) {
+                // executed locally with start.sh (mvn exec:java)
+                // unzip -p target/XXX.jar META-INF/MANIFEST.MF | grep '^Implementation-Version'
+                log.warn("MANIFEST.MF not found in jar or it did not contain a value for Implementation-Version");
             }
-            else {
-                throw new IllegalStateException("Version file not found");
-            }
+            return implementationVersion;
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 }
