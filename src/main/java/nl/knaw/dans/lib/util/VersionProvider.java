@@ -17,18 +17,24 @@ package nl.knaw.dans.lib.util;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
-import java.util.Optional;
-
+/**
+ * Picocli version provider, that reads the version from the manifest file. Note, that this relies on getVersion being called from the main thread. When running the CLI with mvn exec:java, the version
+ * will not be found. In that case the version would not be found anyway, as there is no jar file to read the manifest from. 
+ */
 @Slf4j
 public class VersionProvider {
     public String getVersion() {
-        Optional<StackTraceElement> mainOpt = Arrays.stream(
-            Thread.currentThread().getStackTrace()
-        ).filter(stackTraceElement ->
-            stackTraceElement.getMethodName().equals("main")
-        ).findFirst();
-        return mainOpt.map(VersionProvider::getImplementationVersion).orElse(null);
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        if (trace.length > 0) {
+            StackTraceElement mainMethod = trace[trace.length - 1];
+            if ("main".equals(mainMethod.getMethodName())) {
+                return getImplementationVersion(trace[trace.length - 1]);
+            }
+            else {
+                log.warn("Main method not found in stack trace. Assuming this is a test run.");
+            }
+        }
+        return "Unable to determine version";
     }
 
     private static String getImplementationVersion(StackTraceElement stackTraceElement) {
