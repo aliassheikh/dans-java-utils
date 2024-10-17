@@ -68,7 +68,13 @@ public abstract class AbstractCommandLineApp<C extends Configuration> implements
         CommandLine commandLine = new CommandLine(this);
         configureCommandLine(commandLine, config);
         commandLine.addSubcommand(new GenerateCompletion());
-        System.exit(commandLine.execute(args));
+        try {
+            System.exit(commandLine.execute(args));
+        }
+        catch (Exception e) {
+            log.error("Error running command", e);
+            System.exit(1);
+        }
     }
 
     public C loadConfiguration(File configFile) throws ConfigurationException, IOException {
