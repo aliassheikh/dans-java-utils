@@ -41,7 +41,7 @@ public class DataverseClientFactory {
     private int awaitLockStateMillisecondsBetweenRetries = 500;
     private int awaitIndexingMaxNumberOfRetries = 15;
     private int awaitIndexingMillisecondsBetweenRetries = 1000;
-    private HttpClientConfiguration httpClient = new HttpClientConfiguration();
+    private HttpClientConfiguration httpClient = null;
 
     public DataverseClient build() {
         return build(null, null);
@@ -58,6 +58,9 @@ public class DataverseClientFactory {
             unblockKey);
 
         if (environment == null) {
+            if (httpClient != null) {
+                log.warn("No environment provided, ignoring httpClient configuration");
+            }
             return new DataverseClient(config, HttpClients.createDefault(), new ObjectMapper());
         }
         else {
