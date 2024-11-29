@@ -48,6 +48,10 @@ public class DataverseClientFactory {
     }
 
     public DataverseClient build(Environment environment, String name) {
+        if ((environment == null) != (httpClient == null)) {
+            throw new IllegalArgumentException("Both environment and httpClient must be set or both unset.");
+        }
+
         DataverseClientConfig config = new DataverseClientConfig(
             baseUrl,
             apiKey,
@@ -58,9 +62,6 @@ public class DataverseClientFactory {
             unblockKey);
 
         if (environment == null) {
-            if (httpClient != null) {
-                log.warn("No environment provided, ignoring httpClient configuration");
-            }
             return new DataverseClient(config, HttpClients.createDefault(), new ObjectMapper());
         }
         else {
