@@ -16,16 +16,21 @@
 package nl.knaw.dans.lib.util;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class PathIteratorZipperTest extends AbstractTestWithTestDir {
 
@@ -113,7 +118,7 @@ public class PathIteratorZipperTest extends AbstractTestWithTestDir {
         FileUtils.writeStringToFile(inputDir.resolve("dir2/file4.txt").toFile(), "Bonjour, monde!", StandardCharsets.UTF_8);
 
         // When
-        Iterator<Path> pathIterator = new PathIterator(FileUtils.iterateFiles(inputDir.toFile(), null, true));
+        Iterator<Path> pathIterator = new PathIterator(FileUtils.iterateFilesAndDirs(inputDir.toFile(), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE));
         PathIteratorZipper.builder()
             .rootDir(inputDir)
             .sourceIterator(pathIterator)
@@ -166,4 +171,71 @@ public class PathIteratorZipperTest extends AbstractTestWithTestDir {
             assertThat(zipFile.stream().map(ZipEntry::getName)).containsExactlyInAnyOrder("file3.txt", "file4.txt");
         }
     }
+
+    @Test
+    public void zip_should_throw_IllegalArgumentException_if_non_existent_file_included_by_iterator() throws Exception {
+        // Given
+        Iterator<File> mockIterator = new Iterator<File>() {
+
+            @Override
+            public boolean hasNext() {
+                return true;
+            }
+
+            @Override
+            public File next() {
+                return new File("non-existent-file");
+            }
+        };
+
+        Path inputDir = testDir.resolve("input");
+        Files.createDirectories(inputDir);
+
+        // When
+        Iterator<Path> pathIterator = new PathIterator(mockIterator);
+        PathIteratorZipper zipper = PathIteratorZipper.builder()
+            .rootDir(inputDir)
+            .sourceIterator(pathIterator)
+            .targetZipFile(testDir.resolve("output.zip"))
+            .build();
+
+        // Then
+        assertThatThrownBy(zipper::zip)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("File to zip does not exist: non-existent-file");
+    }
+
+    @Test
+    public void zip_should_throw_IllegalArgumentException_if_non_existent_file_included_by_iterator_after_several_valid_files() throws Exception {
+        // Given
+        File inputDir = testDir.resolve("input").toFile();
+        List<File> files = Arrays.asList(
+            new File(inputDir, "file1.txt"),
+            new File(inputDir, "file2.txt"),
+            new File(inputDir, "non-existent-file"),
+            new File(inputDir, "file3.txt")
+        );
+
+        Iterator<File> iterator = files.iterator();
+
+        Files.createDirectories(inputDir.toPath());
+        FileUtils.writeStringToFile(files.get(0), "Hello, world!", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(files.get(1), "Hola, mundo!", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(files.get(3), "Hallo, wereld!", StandardCharsets.UTF_8);
+
+        // When
+        Iterator<Path> pathIterator = new PathIterator(iterator);
+        PathIteratorZipper zipper = PathIteratorZipper.builder()
+            .rootDir(inputDir.toPath())
+            .sourceIterator(pathIterator)
+            .targetZipFile(testDir.resolve("output.zip"))
+            .build();
+
+        // Then
+        assertThatThrownBy(zipper::zip)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("File to zip does not exist: target/test/PathIteratorZipperTest/input/non-existent-file");
+
+    }
+
 }
