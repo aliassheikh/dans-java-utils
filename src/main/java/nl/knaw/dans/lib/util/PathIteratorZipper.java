@@ -35,7 +35,7 @@ import java.util.Map;
 
 /**
  * Zips files from an iterator of paths into a zip file up to a maximum number of files and bytes (the first limit reached). The resulting ZIP file can be compressed or not. The files in the ZIP file
- * can be renamed. The ZIP file can be overwritten if it already exists.
+ * can be renamed. The ZIP file can be overwritten if it already exists. Note that directory entries are not included in the ZIP file, as this is not formally required by the ZIP file format.
  */
 @Builder
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -114,6 +114,8 @@ public class PathIteratorZipper {
                         catch (IOException e) {
                             throw new RuntimeException(e);
                         }
+                    } else if (!Files.exists(path)) {
+                        throw new IllegalArgumentException("File to zip does not exist: " + path);
                     }
                 }
             }
