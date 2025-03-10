@@ -21,19 +21,17 @@ import io.dropwizard.client.HttpClientConfiguration;
 import io.dropwizard.core.setup.Environment;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
 @Getter
 @Setter
+@Slf4j
 public class DataverseClientFactory {
-    private static final Logger log = LoggerFactory.getLogger(DataverseClientFactory.class);
-
     private URI baseUrl;
     private String apiKey;
     private String unblockKey;
@@ -44,17 +42,21 @@ public class DataverseClientFactory {
     private HttpClientConfiguration httpClient = null;
 
     public DataverseClient build() {
-        return build(null, null);
+        return build(null, null, null);
     }
 
     public DataverseClient build(Environment environment, String name) {
+        return build(environment, name, null);
+    }
+
+    public DataverseClient build(Environment environment, String name, String overrideApiKey) {
         if ((environment == null) != (httpClient == null)) {
             throw new IllegalArgumentException("Both environment and httpClient must be set or both unset.");
         }
 
         DataverseClientConfig config = new DataverseClientConfig(
             baseUrl,
-            apiKey,
+            overrideApiKey != null ? overrideApiKey : apiKey,
             awaitLockStateMaxNumberOfRetries,
             awaitLockStateMillisecondsBetweenRetries,
             awaitIndexingMaxNumberOfRetries,
