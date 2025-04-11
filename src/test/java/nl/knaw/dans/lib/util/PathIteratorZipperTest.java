@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -144,31 +146,34 @@ public class PathIteratorZipperTest extends AbstractTestWithTestDir {
         FileUtils.writeStringToFile(inputDir.resolve("file4.txt").toFile(), "Bonjour, monde!", StandardCharsets.UTF_8);
 
         // When
-        Iterator<Path> pathIterator = new PathIterator(FileUtils.iterateFiles(inputDir.toFile(), null, true));
-        PathIteratorZipper.builder()
-            .rootDir(inputDir)
-            .sourceIterator(pathIterator)
-            .targetZipFile(testDir.resolve("part1.zip"))
-            .maxNumberOfFiles(2)
-            .build()
-            .zip();
+        try (Stream<Path> stream = Files.list(inputDir)) {
+            List<File> files = stream.map(Path::toFile).sorted().collect(Collectors.toList()); // Sort the files to ensure consistent order
+            Iterator<Path> pathIterator = new PathIterator(files.iterator());
+            PathIteratorZipper.builder()
+                .rootDir(inputDir)
+                .sourceIterator(pathIterator)
+                .targetZipFile(testDir.resolve("part1.zip"))
+                .maxNumberOfFiles(2)
+                .build()
+                .zip();
 
-        PathIteratorZipper.builder()
-            .rootDir(inputDir)
-            .sourceIterator(pathIterator)
-            .targetZipFile(testDir.resolve("part2.zip"))
-            .maxNumberOfFiles(2)
-            .build()
-            .zip();
+            PathIteratorZipper.builder()
+                .rootDir(inputDir)
+                .sourceIterator(pathIterator)
+                .targetZipFile(testDir.resolve("part2.zip"))
+                .maxNumberOfFiles(2)
+                .build()
+                .zip();
 
-        // Then
-        assertThat(testDir.resolve("part1.zip")).exists();
-        try (ZipFile zipFile = new ZipFile(testDir.resolve("part1.zip").toFile())) {
-            assertThat(zipFile.stream().map(ZipEntry::getName)).containsExactlyInAnyOrder("file1.txt", "file2.txt");
-        }
-        assertThat(testDir.resolve("part2.zip")).exists();
-        try (ZipFile zipFile = new ZipFile(testDir.resolve("part2.zip").toFile())) {
-            assertThat(zipFile.stream().map(ZipEntry::getName)).containsExactlyInAnyOrder("file3.txt", "file4.txt");
+            // Then
+            assertThat(testDir.resolve("part1.zip")).exists();
+            try (ZipFile zipFile = new ZipFile(testDir.resolve("part1.zip").toFile())) {
+                assertThat(zipFile.stream().map(ZipEntry::getName)).containsExactlyInAnyOrder("file1.txt", "file2.txt");
+            }
+            assertThat(testDir.resolve("part2.zip")).exists();
+            try (ZipFile zipFile = new ZipFile(testDir.resolve("part2.zip").toFile())) {
+                assertThat(zipFile.stream().map(ZipEntry::getName)).containsExactlyInAnyOrder("file3.txt", "file4.txt");
+            }
         }
     }
 
