@@ -17,18 +17,43 @@ package nl.knaw.dans.lib.util;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 public class ZipUtil {
+
+    public static void extractZipFile(Path zipFilePath, Path outputDirectory) throws IOException {
+        try (ZipFile zipFile = ZipFile.builder().setPath(zipFilePath).get()) {
+            Collections.list(zipFile.getEntries()).forEach(entry -> {
+                try (InputStream input = zipFile.getInputStream(entry)) {
+                    Path outputPath = outputDirectory.resolve(entry.getName());
+                    if (!outputPath.normalize().startsWith(outputDirectory)) {
+                        throw new IllegalArgumentException("Bad zip entry path: '" + entry.getName() + "'");
+                    }
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(outputPath);
+                        return;
+                    }
+                    Files.createDirectories(outputPath.getParent()); // ZIPs created by Dataverse don't seem to comply with the ZIP spec, so we have to create the parent directories manually
+                    IOUtils.copy(input, Files.newOutputStream(outputPath.toFile().toPath()));
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+    }
 
     public static void zipDirectory(Path sourceDirectory, Path targetZipFile, boolean oneRootDir) throws IOException {
         try (OutputStream outputStream = Files.newOutputStream(targetZipFile)) {

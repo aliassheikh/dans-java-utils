@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -52,8 +53,11 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
     private final FileAlterationMonitor monitor;
 
+    private final CountDownLatch awaitLatch;
+
     @Builder
-    private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator) {
+    private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator,
+        CountDownLatch awaitLatch) {
         this.inbox = inbox;
         this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : fileFilter;
         this.taskFactory = taskFactory;
@@ -63,10 +67,15 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
         this.executorService = executorService == null ? Executors.newSingleThreadExecutor() : executorService;
         this.inboxItemComparator = inboxItemComparator == null ? Comparator.comparing(Path::getFileName) : inboxItemComparator;
         this.monitor = new FileAlterationMonitor(interval == 0 ? 1000 : interval);
+        this.awaitLatch = awaitLatch;
     }
 
     @Override
     public void start() throws Exception {
+        if (awaitLatch != null) {
+            log.info("Waiting for latch to be released before starting inbox");
+            awaitLatch.await();
+        }
         log.info("Starting Inbox at '{}'", this.inbox);
 
         try {
@@ -107,7 +116,11 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
         try (Stream<Path> files = Files.list(inbox)) {
             for (Path path : files.sorted(inboxItemComparator).collect(Collectors.toList())) {
                 try {
-                    executorService.submit(taskFactory.createInboxTask(path));
+                    if (fileFilter.accept(path.toFile())) {
+                        executorService.submit(taskFactory.createInboxTask(path));
+                    } else {
+                        log.debug("File filter rejected: {}", path);
+                    }
                 }
                 catch (Exception e) {
                     log.error("Error processing inbox item: {}", path, e);
