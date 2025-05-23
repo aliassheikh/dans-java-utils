@@ -23,17 +23,22 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
+import org.apache.commons.io.monitor.FileEntry;
 
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.List;
 
 /**
  * An inbox is a directory that is monitored for new files. When a new file is detected, a task is created to process the file.
@@ -41,7 +46,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     @NonNull
-    private final Path inbox;
+    private final FileEntry inboxFileEntry;
     private final IOFileFilter fileFilter;
     @NonNull
     private final InboxTaskFactory taskFactory;
@@ -55,10 +60,12 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
     private final CountDownLatch awaitLatch;
 
+    private boolean initialItemsProcessed = false;
+
     @Builder
     private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator,
         CountDownLatch awaitLatch) {
-        this.inbox = inbox;
+        this.inboxFileEntry = new FileEntry(inbox.toFile());
         this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : fileFilter;
         this.taskFactory = taskFactory;
         this.onPollingHandler = onPollingHandler == null ?
@@ -76,11 +83,10 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
             log.info("Waiting for latch to be released before starting inbox");
             awaitLatch.await();
         }
-        log.info("Starting Inbox at '{}'", this.inbox);
+        log.info("Starting Inbox at '{}'", this.inboxFileEntry.getFile());
 
         try {
-            log.debug("Starting file alteration monitor for path '{}'", this.inbox);
-            processFilesBeforeStart();
+            log.debug("Starting file alteration monitor for path '{}'", this.inboxFileEntry.getFile());
             startFileAlterationMonitor();
         }
         catch (IOException e) {
@@ -91,7 +97,7 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
     @Override
     public void stop() throws Exception {
-        log.info("Stopping Inbox at '{}'", this.inbox);
+        log.info("Stopping Inbox at '{}'", this.inboxFileEntry.getFile());
         monitor.stop();
     }
 
@@ -109,28 +115,64 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
     @Override
     public void onStart(FileAlterationObserver observer) {
+        processInitialItems();
         onPollingHandler.run();
     }
 
-    private void processFilesBeforeStart() throws IOException {
-        try (Stream<Path> files = Files.list(inbox)) {
-            for (Path path : files.sorted(inboxItemComparator).collect(Collectors.toList())) {
-                try {
-                    if (fileFilter.accept(path.toFile())) {
-                        executorService.submit(taskFactory.createInboxTask(path));
-                    } else {
-                        log.debug("File filter rejected: {}", path);
+    private void processInitialItems() {
+        if (initialItemsProcessed) {
+            return;
+        }
+
+        /*
+         * After monitor.start() has been called, inboxFileEntry has been initialized with the current state of the directory. Anything that appear after that will be picked up by the monitor.
+         * However, we also want to process the items that are already in the inbox when the monitor starts, in the correct order.
+         */
+        try {
+            List<Path> filesToProcess = new ArrayList<>();
+
+            Files.walkFileTree(inboxFileEntry.getFile().toPath(), new SimpleFileVisitor<Path>() {
+
+                @Override
+                public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) {
+                    if (!fileFilter.accept(dir.toFile()) && !dir.equals(inboxFileEntry.getFile().toPath())) {
+                        return FileVisitResult.SKIP_SUBTREE; // Skip this directory if the filter does not accept it
                     }
+                    return FileVisitResult.CONTINUE;
                 }
-                catch (Exception e) {
-                    log.error("Error processing inbox item: {}", path, e);
+
+                @Override
+                public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
+                    if (fileFilter.accept(file.toFile())) {
+                        filesToProcess.add(file); // Collect files to process
+                    }
+                    return FileVisitResult.CONTINUE;
                 }
+            });
+
+            // Sort the collected files using the comparator
+            filesToProcess.sort(inboxItemComparator);
+
+            // Submit tasks for the sorted files
+            for (Path file : filesToProcess) {
+                log.debug("Initial inbox item detected at: {}", file);
+                executorService.submit(taskFactory.createInboxTask(file));
             }
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Error processing initial items in inbox", e);
+        }
+        finally {
+            initialItemsProcessed = true;
+            log.debug("Initial items processed");
         }
     }
 
     private void startFileAlterationMonitor() throws Exception {
-        FileAlterationObserver observer = new FileAlterationObserver(inbox.toFile(), fileFilter);
+        FileAlterationObserver observer = FileAlterationObserver.builder()
+            .setRootEntry(inboxFileEntry)
+            .setFileFilter(fileFilter).get();
+
         observer.addListener(this);
 
         monitor.addObserver(observer);
