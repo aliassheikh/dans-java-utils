@@ -35,10 +35,11 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.List;
 
 /**
  * An inbox is a directory that is monitored for new files. When a new file is detected, a task is created to process the file.
@@ -59,6 +60,8 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private final FileAlterationMonitor monitor;
 
     private final CountDownLatch awaitLatch;
+
+    private final List<Path> createdFilesAndDirectories = new LinkedList<>();
 
     private boolean initialItemsProcessed = false;
 
@@ -104,19 +107,35 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     @Override
     public void onFileCreate(File file) {
         log.debug("New inbox item detected at: {}", file);
-        executorService.submit(taskFactory.createInboxTask(file.toPath()));
+        createdFilesAndDirectories.add(file.toPath());
     }
 
     @Override
     public void onDirectoryCreate(File directory) {
         log.debug("New inbox item detected at: {}", directory);
-        executorService.submit(taskFactory.createInboxTask(directory.toPath()));
+        createdFilesAndDirectories.add(directory.toPath());
     }
 
     @Override
     public void onStart(FileAlterationObserver observer) {
+        log.debug("Start polling round for inbox at: {}", inboxFileEntry.getFile());
         processInitialItems();
         onPollingHandler.run();
+    }
+
+    @Override
+    public void onStop(FileAlterationObserver observer) {
+        /*
+         * Processing new events at the end of the polling round, because if multiple files are detected in one polling round, the library will process them in alphabetical order and not in the order
+         * as specified by the comparator.
+         */
+        log.debug("Processing {} created files and directories", createdFilesAndDirectories.size());
+        createdFilesAndDirectories.sort(inboxItemComparator);
+        for (Path file : createdFilesAndDirectories) {
+            log.debug("Processing created file: {}", file);
+            executorService.submit(taskFactory.createInboxTask(file));
+        }
+        createdFilesAndDirectories.clear();
     }
 
     private void processInitialItems() {
