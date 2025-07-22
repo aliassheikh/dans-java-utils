@@ -17,8 +17,8 @@ package nl.knaw.dans.lib.util;
 
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -28,9 +28,9 @@ import java.util.concurrent.LinkedBlockingDeque;
  *
  * Click <a href="../../../../../../examples/#executorservicefactory" target="_blank">here</a> for code examples.
  */
+@Slf4j
+@Data
 public class ExecutorServiceFactory {
-
-    private static final Logger log = LoggerFactory.getLogger(ExecutorServiceFactory.class);
 
     private String nameFormat;
 
@@ -49,45 +49,5 @@ public class ExecutorServiceFactory {
             .maxThreads(maxThreads)
             .keepAliveTime(Duration.parse(keepAliveTime))
             .build();
-    }
-
-    public String getNameFormat() {
-        return nameFormat;
-    }
-
-    public void setNameFormat(String nameFormat) {
-        this.nameFormat = nameFormat;
-    }
-
-    public int getMinThreads() {
-        return minThreads;
-    }
-
-    public void setMinThreads(int minThreads) {
-        this.minThreads = minThreads;
-    }
-
-    public int getMaxThreads() {
-        return maxThreads;
-    }
-
-    public void setMaxThreads(int maxThreads) {
-        this.maxThreads = maxThreads;
-    }
-
-    public String getKeepAliveTime() {
-        return keepAliveTime;
-    }
-
-    public void setKeepAliveTime(String keepAliveTime) {
-        this.keepAliveTime = keepAliveTime;
-    }
-
-    public int getMaxQueueSize() {
-        return maxQueueSize;
-    }
-
-    public void setMaxQueueSize(int maxQueueSize) {
-        this.maxQueueSize = maxQueueSize;
     }
 }
