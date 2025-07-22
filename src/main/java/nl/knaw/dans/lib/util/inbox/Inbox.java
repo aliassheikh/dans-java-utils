@@ -19,20 +19,18 @@ import io.dropwizard.lifecycle.Managed;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import nl.knaw.dans.lib.util.CustomFileFilters;
+import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.commons.io.monitor.FileEntry;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -42,7 +40,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * An inbox is a directory that is monitored for new files. When a new file is detected, a task is created to process the file.
+ * <p>
+ * A managed inbox that monitors a directory for new files and directories, processes them using a provided task factory, and allows for custom file filtering. A managed inbox that monitors a
+ * directory for new files and/or directories, processes them using a provided task factory, and allows for custom file filtering. Note, however, that the inbox does not support recursive monitoring
+ * of subdirectories; it only processes files and directories directly within the specified inbox directory.
+ * </p>
+ * <p>
+ * The inbox can be started and stopped, and it supports initial processing of existing items in the inbox.
+ * </p>
  */
 @Slf4j
 public class Inbox extends FileAlterationListenerAdaptor implements Managed {
@@ -58,22 +63,18 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private final Comparator<Path> inboxItemComparator;
 
     private final FileAlterationMonitor monitor;
-
     private final CountDownLatch awaitLatch;
-
     private final List<Path> createdFilesAndDirectories = new LinkedList<>();
-
     private boolean initialItemsProcessed = false;
 
     @Builder
     private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator,
         CountDownLatch awaitLatch) {
         this.inboxFileEntry = new FileEntry(inbox.toFile());
-        this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : fileFilter;
+        this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : FileFilterUtils.and(fileFilter, CustomFileFilters.childOf(inbox));
         this.taskFactory = taskFactory;
-        this.onPollingHandler = onPollingHandler == null ?
-            () -> {
-            } : onPollingHandler;
+        this.onPollingHandler = onPollingHandler == null ? () -> {
+        } : onPollingHandler;
         this.executorService = executorService == null ? Executors.newSingleThreadExecutor() : executorService;
         this.inboxItemComparator = inboxItemComparator == null ? Comparator.comparing(Path::getFileName) : inboxItemComparator;
         this.monitor = new FileAlterationMonitor(interval == 0 ? 1000 : interval);
@@ -125,10 +126,6 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
     @Override
     public void onStop(FileAlterationObserver observer) {
-        /*
-         * Processing new events at the end of the polling round, because if multiple files are detected in one polling round, the library will process them in alphabetical order and not in the order
-         * as specified by the comparator.
-         */
         log.debug("Processing {} created files and directories", createdFilesAndDirectories.size());
         createdFilesAndDirectories.sort(inboxItemComparator);
         for (Path file : createdFilesAndDirectories) {
@@ -142,37 +139,17 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
         if (initialItemsProcessed) {
             return;
         }
-
-        /*
-         * After monitor.start() has been called, inboxFileEntry has been initialized with the current state of the directory. Anything that appear after that will be picked up by the monitor.
-         * However, we also want to process the items that are already in the inbox when the monitor starts, in the correct order.
-         */
         try {
             List<Path> filesToProcess = new ArrayList<>();
+            Path inboxPath = inboxFileEntry.getFile().toPath();
 
-            Files.walkFileTree(inboxFileEntry.getFile().toPath(), new SimpleFileVisitor<Path>() {
+            try (var stream = Files.list(inboxPath)) {
+                stream.filter(path -> fileFilter.accept(path.toFile()))
+                    .forEach(filesToProcess::add);
+            }
 
-                @Override
-                public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) {
-                    if (!fileFilter.accept(dir.toFile()) && !dir.equals(inboxFileEntry.getFile().toPath())) {
-                        return FileVisitResult.SKIP_SUBTREE; // Skip this directory if the filter does not accept it
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
-                    if (fileFilter.accept(file.toFile())) {
-                        filesToProcess.add(file); // Collect files to process
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            // Sort the collected files using the comparator
             filesToProcess.sort(inboxItemComparator);
 
-            // Submit tasks for the sorted files
             for (Path file : filesToProcess) {
                 log.debug("Initial inbox item detected at: {}", file);
                 executorService.submit(taskFactory.createInboxTask(file));
@@ -190,10 +167,10 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private void startFileAlterationMonitor() throws Exception {
         FileAlterationObserver observer = FileAlterationObserver.builder()
             .setRootEntry(inboxFileEntry)
-            .setFileFilter(fileFilter).get();
+            .setFileFilter(fileFilter)
+            .get();
 
         observer.addListener(this);
-
         monitor.addObserver(observer);
         monitor.start();
     }
