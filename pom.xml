@@ -93,6 +93,12 @@
             <artifactId>commons-csv</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.4.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- for testing -->
         <dependency>
