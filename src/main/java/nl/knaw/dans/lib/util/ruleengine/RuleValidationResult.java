@@ -15,11 +15,22 @@
  */
 package nl.knaw.dans.lib.util.ruleengine;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
 /**
- * This object is used internally by the RuleEngine to keep
- * track of the status of rules executed
+ * This object is used internally by the RuleEngine to keep track of the status of rules executed
  */
+@Getter
+@ToString
+@EqualsAndHashCode
 public class RuleValidationResult {
+    public enum RuleValidationResultStatus {
+        SUCCESS,
+        FAILURE,
+        SKIPPED
+    }
 
     private final String number;
     private final RuleValidationResultStatus status;
@@ -45,37 +56,5 @@ public class RuleValidationResult {
         this.status = status;
         this.errorMessage = null;
         this.shouldSkipDependencies = shouldSkipDependencies;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public boolean isShouldSkipDependencies() {
-        return shouldSkipDependencies;
-    }
-
-    public String getNumber() {
-        return number;
-    }
-
-    public RuleValidationResultStatus getStatus() {
-        return status;
-    }
-
-    public enum RuleValidationResultStatus {
-        SUCCESS,
-        FAILURE,
-        SKIPPED
-    }
-
-    @Override
-    public String toString() {
-        return "RuleValidationResult{" +
-            "number='" + number + '\'' +
-            ", status=" + status +
-            ", errorMessage='" + errorMessage + '\'' +
-            ", shouldSkipDependencies=" + shouldSkipDependencies +
-            '}';
     }
 }

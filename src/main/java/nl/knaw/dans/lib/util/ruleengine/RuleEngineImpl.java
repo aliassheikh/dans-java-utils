@@ -32,7 +32,7 @@ public class RuleEngineImpl implements RuleEngine {
     private static final Logger log = LoggerFactory.getLogger(RuleEngineImpl.class);
 
     @Override
-    public void validateRuleSet(NumberedRule[] rules) throws RuleEngineConfigurationException {
+    public void validateRuleSet(List<NumberedRule> rules) throws RuleEngineConfigurationException {
         // validate each rule number is unique
         var duplicateRules = getDuplicateRules(rules);
 
@@ -53,9 +53,9 @@ public class RuleEngineImpl implements RuleEngine {
     }
 
     @Override
-    public List<RuleValidationResult> validateBag(Path bag, NumberedRule[] rules) throws Exception {
+    public List<RuleValidationResult> validateBag(Path bag, List<NumberedRule> rules) throws Exception {
         final var ruleResults = new HashMap<String, RuleValidationResult>();
-        final var rulesToExecute = List.of(rules);
+        final var rulesToExecute = rules;
 
         // create a copy, because we will modify this list
         var remainingRules = new ArrayList<>(rulesToExecute);
@@ -68,15 +68,15 @@ public class RuleEngineImpl implements RuleEngine {
 
                 // will never be processed, so skip it and remove it from the remaining rules
                 if (shouldBeSkipped(rule, ruleResults)) {
-                    log.trace("Skipping task {} because dependencies are not successful", rule.getNumber());
+                    log.debug("Skipping task {} because dependencies are not successful", rule.getNumber());
                     ruleResults.put(number, new RuleValidationResult(number, RuleValidationResult.RuleValidationResultStatus.SKIPPED));
                     toRemove.add(rule);
                 }
                 else if (canBeExecuted(rule, ruleResults)) {
-                    log.trace("Executing task {}", rule.getNumber());
+                    log.debug("Executing task {}", rule.getNumber());
                     var response = rule.getRule().validate(bag);
 
-                    log.trace("Task result: {}", response.getStatus());
+                    log.debug("Task result: {}", response.getStatus());
                     RuleValidationResult ruleValidationResult = switch (response.getStatus()) {
                         case SUCCESS -> new RuleValidationResult(number, RuleValidationResult.RuleValidationResultStatus.SUCCESS);
                         case SKIP_DEPENDENCIES -> new RuleValidationResult(number, RuleValidationResult.RuleValidationResultStatus.SUCCESS, true);
@@ -86,13 +86,15 @@ public class RuleEngineImpl implements RuleEngine {
                     ruleResults.put(number, ruleValidationResult);
 
                     if (response.getException() != null) {
-                        log.warn("Rule provided an exception while executing", response.getException());
+                        // Log this at debug level, as an Exception that was caught by the rule implementation
+                        // is not necessarily an error in the rule engine itself, and will be reported as part of the RuleValidationResult
+                        log.debug("Rule provided an exception while executing", response.getException());
                     }
 
                     toRemove.add(rule);
                 }
                 else {
-                    log.trace("Skipping rule {} because its dependencies have not yet executed", rule);
+                    log.debug("Skipping rule {} because its dependencies have not yet executed", rule);
                 }
             }
 
@@ -195,10 +197,10 @@ public class RuleEngineImpl implements RuleEngine {
     }
 
     // find any rule that depends on a rule that doesn't exist
-    private List<String> getUnresolvedDependencies(NumberedRule[] rules) {
+    private List<String> getUnresolvedDependencies(List<NumberedRule> rules) {
         var unresolved = new ArrayList<String>();
 
-        var keys = Arrays.stream(rules)
+        var keys = rules.stream()
             .map(NumberedRule::getNumber)
             .collect(Collectors.toSet());
 
@@ -213,7 +215,7 @@ public class RuleEngineImpl implements RuleEngine {
     }
 
     // find any rule that has a number that is present multiple times in the list
-    private List<String> getDuplicateRules(NumberedRule[] rules) {
+    private List<String> getDuplicateRules(List<NumberedRule> rules) {
         var duplicates = new ArrayList<String>();
         var seen = new ArrayList<String>();
 
@@ -224,7 +226,7 @@ public class RuleEngineImpl implements RuleEngine {
             // - one of the 2 (or both) rules have type ALL (indicated by a null value)
             // - both have the same type
             if (seen.contains(number)) {
-                 duplicates.add(number);
+                duplicates.add(number);
             }
 
             seen.add(number);

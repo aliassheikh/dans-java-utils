@@ -15,7 +15,6 @@
  */
 package nl.knaw.dans.lib.util.ruleengine;
 
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -33,12 +32,11 @@ class RuleEngineImplTest {
         var fakeRule = Mockito.mock(BagValidatorRule.class);
         var result = new RuleResult(RuleResult.Status.SUCCESS, List.of());
         Mockito.when(fakeRule.validate(Mockito.any())).thenReturn(result);
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.2", fakeRule),
             new NumberedRule("1.3", fakeRule),
-            new NumberedRule("1.4", fakeRule),
-        };
+            new NumberedRule("1.4", fakeRule));
 
         var engine = new RuleEngineImpl();
         assertDoesNotThrow(() -> engine.validateRuleSet(rules));
@@ -53,12 +51,11 @@ class RuleEngineImplTest {
         var fakeRuleSkipped = Mockito.mock(BagValidatorRule.class);
         var result = new RuleResult(RuleResult.Status.SUCCESS, List.of());
         Mockito.when(fakeRule.validate(Mockito.any())).thenReturn(result);
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.2", fakeRuleSkipped),
             new NumberedRule("1.3", fakeRule, List.of("1.2")),
-            new NumberedRule("1.4", fakeRule),
-        };
+            new NumberedRule("1.4", fakeRule));
 
         var failedResult = new RuleResult(RuleResult.Status.ERROR, List.of());
         Mockito.when(fakeRuleSkipped.validate(Mockito.any())).thenReturn(failedResult);
@@ -76,13 +73,13 @@ class RuleEngineImplTest {
         var fakeRule = Mockito.mock(BagValidatorRule.class);
         var result = new RuleResult(RuleResult.Status.SUCCESS, List.of());
         Mockito.when(fakeRule.validate(Mockito.any())).thenReturn(result);
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.2", fakeRule),
             new NumberedRule("1.2", fakeRule),
             new NumberedRule("1.3", fakeRule, List.of("1.2")),
-            new NumberedRule("1.4", fakeRule),
-        };
+            new NumberedRule("1.4", fakeRule));
+
 
         var engine = new RuleEngineImpl();
 
@@ -98,11 +95,10 @@ class RuleEngineImplTest {
         Mockito.when(fakeRule.validate(Mockito.any())).thenReturn(result);
 
         // will fail because 1.2 does not exist and 1.3 depends on it
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.3", fakeRule, List.of("1.2")),
-            new NumberedRule("1.4", fakeRule),
-        };
+            new NumberedRule("1.4", fakeRule));
 
         var engine = new RuleEngineImpl();
 
@@ -120,13 +116,12 @@ class RuleEngineImplTest {
         // This will fail because 1.2 is declared as both a "generic" rule type
         // and a MIGRATION type. It should either be declared with 2 explicit
         // DepositType's, or just once as a generic rule.
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.2", fakeRule),
             new NumberedRule("1.2", fakeRule),
             new NumberedRule("1.3", fakeRule, List.of("1.2")),
-            new NumberedRule("1.4", fakeRule),
-        };
+            new NumberedRule("1.4", fakeRule));
 
         var engine = new RuleEngineImpl();
 
@@ -146,11 +141,10 @@ class RuleEngineImplTest {
         Mockito.when(fakeRule.validate(Mockito.any())).thenReturn(goodResult);
 
         // This caused issues as described in DD-1135
-        var rules = new NumberedRule[] {
+        var rules = List.of(
             new NumberedRule("1.1", fakeRule),
             new NumberedRule("1.2", fakeRule),
-            new NumberedRule("1.3", fakeErrorRule, List.of("1.2")),
-        };
+            new NumberedRule("1.3", fakeErrorRule, List.of("1.2")));
 
         var engine = new RuleEngineImpl();
         var result = engine.validateBag(Path.of("bagdir"), rules);

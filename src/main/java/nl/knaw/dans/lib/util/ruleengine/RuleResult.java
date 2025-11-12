@@ -15,10 +15,22 @@
  */
 package nl.knaw.dans.lib.util.ruleengine;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
 import java.util.List;
 
-// A simple container for the results of the execution of a single rule
+@Getter
+@ToString
+@EqualsAndHashCode
 public class RuleResult {
+    public enum Status {
+        SUCCESS,
+        SKIP_DEPENDENCIES,
+        ERROR,
+    }
+
     private final List<String> errorMessages;
     private final Status status;
     private Throwable exception;
@@ -53,32 +65,4 @@ public class RuleResult {
     public static RuleResult skipDependencies() {
         return new RuleResult(Status.SKIP_DEPENDENCIES, null);
     }
-
-    public Throwable getException() {
-        return exception;
-    }
-
-    public List<String> getErrorMessages() {
-        return errorMessages;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    @Override
-    public String toString() {
-        return "RuleResult{" +
-            "errorMessages=" + errorMessages +
-            ", status=" + status +
-            ", exception=" + exception +
-            '}';
-    }
-
-    public enum Status {
-        SUCCESS,
-        SKIP_DEPENDENCIES,
-        ERROR,
-    }
-
 }

@@ -29,7 +29,7 @@ public interface RuleEngine {
      * @param rules the rule set
      * @throws RuleEngineConfigurationException if the rule set is not consistent
      */
-    void validateRuleSet(NumberedRule[] rules) throws RuleEngineConfigurationException;
+    void validateRuleSet(List<NumberedRule> rules) throws RuleEngineConfigurationException;
 
     /**
      * Validates the given bag against a given rule set.
@@ -39,6 +39,6 @@ public interface RuleEngine {
      * @return the validation result
      * @throws Exception if the validation could not be completed successfully
      */
-    List<RuleValidationResult> validateBag(Path bag, NumberedRule[] rules) throws Exception;
+    List<RuleValidationResult> validateBag(Path bag, List<NumberedRule> rules) throws Exception;
 
 }
