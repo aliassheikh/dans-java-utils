@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2021 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package nl.knaw.dans.lib.util;
 
 import org.junit.jupiter.api.Test;
@@ -234,13 +249,14 @@ public class XmlSchemaValidatorTest {
     }
 
     @Test
-    public void should_throw_runtime_exception_for_invalid_schema() {
-        Map<String, URI> aliasToSchemaLocation = new HashMap<>();
-        aliasToSchemaLocation.put("invalid", URI.create("http://example.com/invalid.xsd"));
+    public void should_throw_runtime_exception_for_invalid_schema() throws Exception {
+        Map<String, URI> aliasToSchemaLocation = Map.of(
+            "invalid", Objects.requireNonNull(XmlSchemaValidatorTest.class.getResource("/XmlSchemaValidatorTest/invalid.xsd")).toURI()
+        );
         assertThatThrownBy(() -> new XmlSchemaValidator(aliasToSchemaLocation))
             .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Could not load schema for alias 'invalid'");
-        // The actual problem with the schema is not contained in the message, so not checked here
+            .hasMessageContaining("Could not load schema for alias 'invalid'")
+            .hasMessageContaining("Error resolving component 'xs:intege'"); // note the typo in 'integer'
     }
 
 }
