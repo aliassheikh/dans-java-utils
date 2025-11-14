@@ -144,8 +144,6 @@ public class ProcessInputStream extends InputStream {
         this.delegate = pipedIn;
     }
 
-    // ... existing code ...
-
     @Override
     public int read() throws IOException {
         earlyFailIfProcessFailed();
