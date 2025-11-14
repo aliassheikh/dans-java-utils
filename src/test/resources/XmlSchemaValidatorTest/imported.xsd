@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:note="http://example.com/note"
+           xmlns:person="http://example.com/person"
+           targetNamespace="http://example.com/message"
+           elementFormDefault="qualified">
+
+    <xs:import namespace="http://example.com/note" schemaLocation="note.xsd"/>
+    <xs:import namespace="http://example.com/person" schemaLocation="person.xsd"/>
+
+    <xs:element name="message">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="from">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="person:person"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="to">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="person:person"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element ref="note:note"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
