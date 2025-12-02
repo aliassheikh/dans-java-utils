@@ -14,8 +14,14 @@
 # limitations under the License.
 #
 
-echo "START build and add javadocs..."
+set -e
+
+echo "Delomboking first, so that getters and setters will appear in JavaDocs"
+mvn clean lombok:delombok
+echo "Calling JavaDoc"
 mvn javadoc:javadoc
+echo "Removing existing JavaDocs if present"
 if [ -d "docs/javadocs" ]; then rm -fr docs/javadocs; fi
-mv target/site/apidocs docs/javadocs
+echo "Moving newly generated JavaDocs in place"
+mv target/reports/apidocs docs/javadocs
 echo "DONE build and add javadocs"
