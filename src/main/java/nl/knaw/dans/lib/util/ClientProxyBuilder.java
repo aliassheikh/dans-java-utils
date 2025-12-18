@@ -75,7 +75,6 @@ public class ClientProxyBuilder<A, D> {
             /*
              * Note that BeanUtils.setProperty will be silently ignored, probably because the setter returns the 'this' reference.
              */
-
             // End-slashes trip up the API client, so we remove them from the base path.
             // Set basePath
             Field basePathField = apiClient.getClass().getDeclaredField("basePath");
@@ -91,11 +90,19 @@ public class ClientProxyBuilder<A, D> {
             // By default no Accept header is set, which sometimes causes the server to try to format errors as HTML and failing, making it hard to get at the underlying error message.
             Method addDefaultHeaderMethod = apiClient.getClass().getMethod("addDefaultHeader", String.class, String.class);
             addDefaultHeaderMethod.invoke(apiClient, "Accept", "application/json");
+
+            // Actually, the line .user(httpClient) above should have set the User-Agent header already but it doesn't seem to work, so we set it manually if present as a workaround.
+            if (httpClient.getUserAgent().isPresent()) {
+                Method setUserAgentMethod = apiClient.getClass().getMethod("setUserAgent", String.class);
+                setUserAgentMethod.invoke(apiClient, httpClient.getUserAgent().get());
+            }
+
+            return defaultApiCtor.apply(apiClient);
         }
         catch (Exception e) {
             log.error("Error setting properties on apiClient", e);
             throw new RuntimeException(e);
         }
-        return defaultApiCtor.apply(apiClient);
+
     }
 }
