@@ -1,6 +1,12 @@
-# Code Examples
+Getting started
+===============
 
-## ExecutorServiceFactory
+Basic usage
+-----------
+
+For including the library as a dependency in a Maven project, see [the installation instructions](./index.md#installation)
+
+### Example: ExecutorServiceFactory
 
 In the configuration class of your DropWizard project, declare a field for configuring the executor. If your executor
 will process jobs, you could name it `jobQueue`
