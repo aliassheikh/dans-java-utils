@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -85,13 +85,16 @@ public class PollingTaskExecutor<R> implements Managed {
 
     public void tick() {
         try {
-            Optional<R> input = getNextInput();
-            if (input.isEmpty()) {
+            var inputs = getNextInputs();
+            if (inputs.isEmpty()) {
                 return;
             }
-            log.debug("{}: found next task input: {}", name, input.get());
-            Runnable task = taskFactory.create(input.get());
-            taskScheduler.schedule(task);
+            log.debug("{}: found {} task input(s)", name, inputs.size());
+            for (var input : inputs) {
+                log.debug("{}: scheduling task for input: {}", name, input);
+                Runnable task = taskFactory.create(input);
+                taskScheduler.schedule(task);
+            }
         }
         catch (Exception e) {
             log.error("{}: error while polling or running task", name, e);
@@ -100,7 +103,7 @@ public class PollingTaskExecutor<R> implements Managed {
 
     // Must be protected for UnitOfWork to function.
     @UnitOfWork
-    protected Optional<R> getNextInput() {
-        return taskSource.nextInput();
+    protected List<R> getNextInputs() {
+        return taskSource.nextInputs();
     }
 }

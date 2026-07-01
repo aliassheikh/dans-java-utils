@@ -15,15 +15,31 @@
  */
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
- * Represents a source of tasks from which tasks can be fetched. Implementations of this interface are responsible for providing the logic to retrieve the next available input that represents one
- * task to be executed, returning an empty Optional if no tasks are available. When invoked by {@code PollingTaskExecutor}, this method is run within a {@code @UnitOfWork} so that any updates it
- * makes to the database are visible to the resulting tasks.
+ * Represents a source of tasks from which tasks can be fetched. When invoked by {@code PollingTaskExecutor}, these methods are run within a {@code @UnitOfWork} so that any updates they make to
+ * the database are visible to the resulting tasks.
  *
  * @param <R> the type of the input used to create or schedule a task
  */
 public interface TaskSource<R> {
+
+    /**
+     * Returns the next available input, or an empty Optional if no tasks are available.
+     *
+     * @return an Optional containing the next input, or empty if none is available
+     */
     Optional<R> nextInput();
+
+    /**
+     * Returns a list of available inputs to be processed in order. Defaults to a singleton list from {@link #nextInput()}, or an empty list if none is available. Implementations may override this
+     * method to return multiple inputs at once.
+     *
+     * @return a list of inputs to process, possibly empty
+     */
+    default List<R> nextInputs() {
+        return nextInput().map(List::of).orElse(List.of());
+    }
 }

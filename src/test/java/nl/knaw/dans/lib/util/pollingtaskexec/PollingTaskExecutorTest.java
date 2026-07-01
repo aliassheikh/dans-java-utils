@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -82,34 +83,56 @@ class PollingTaskExecutorTest {
         String record = "test-record";
         Runnable task = mock(Runnable.class);
 
-        when(taskSource.nextInput()).thenReturn(Optional.of(record));
+        when(taskSource.nextInputs()).thenReturn(List.of(record));
         when(taskFactory.create(record)).thenReturn(task);
 
         executor.tick();
 
-        verify(taskSource).nextInput();
+        verify(taskSource).nextInputs();
         verify(taskFactory).create(record);
         verify(task).run();
     }
 
     @Test
     void tick_should_do_nothing_if_source_is_empty() {
-        when(taskSource.nextInput()).thenReturn(Optional.empty());
+        when(taskSource.nextInputs()).thenReturn(List.of());
 
         executor.tick();
 
-        verify(taskSource).nextInput();
+        verify(taskSource).nextInputs();
         verify(taskFactory, never()).create(any());
     }
 
     @Test
+    void tick_should_schedule_multiple_tasks_in_order() {
+        String record1 = "record-1";
+        String record2 = "record-2";
+        String record3 = "record-3";
+        Runnable task1 = mock(Runnable.class);
+        Runnable task2 = mock(Runnable.class);
+        Runnable task3 = mock(Runnable.class);
+
+        when(taskSource.nextInputs()).thenReturn(List.of(record1, record2, record3));
+        when(taskFactory.create(record1)).thenReturn(task1);
+        when(taskFactory.create(record2)).thenReturn(task2);
+        when(taskFactory.create(record3)).thenReturn(task3);
+
+        executor.tick();
+
+        var order = inOrder(task1, task2, task3);
+        order.verify(task1).run();
+        order.verify(task2).run();
+        order.verify(task3).run();
+    }
+
+    @Test
     void tick_should_catch_and_log_exceptions() {
-        when(taskSource.nextInput()).thenThrow(new RuntimeException("test exception"));
+        when(taskSource.nextInputs()).thenThrow(new RuntimeException("test exception"));
 
         // Should not throw exception
         executor.tick();
 
-        verify(taskSource).nextInput();
+        verify(taskSource).nextInputs();
     }
 
     @Test
@@ -119,12 +142,12 @@ class PollingTaskExecutorTest {
         // Verify it works as expected by running a tick on the copy
         String record = "test-record";
         Runnable task = mock(Runnable.class);
-        when(taskSource.nextInput()).thenReturn(Optional.of(record));
+        when(taskSource.nextInputs()).thenReturn(List.of(record));
         when(taskFactory.create(record)).thenReturn(task);
 
         copy.tick();
 
-        verify(taskSource).nextInput();
+        verify(taskSource).nextInputs();
         verify(taskFactory).create(record);
         verify(task).run();
     }
